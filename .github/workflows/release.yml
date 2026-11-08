@@ -127,6 +127,10 @@ jobs:
       TAG: ${{ needs.prepare.outputs.tag }}
       APT_GPG_PRIVATE_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
     steps:
+      - name: Install APT tooling
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends apt-utils gnupg
       - name: Checkout gh-pages
         uses: actions/checkout@v4
         with:
