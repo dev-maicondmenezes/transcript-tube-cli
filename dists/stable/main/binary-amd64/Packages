@@ -1,0 +1,15 @@
+Package: tyot
+Architecture: amd64
+Version: 0.1.0
+Priority: optional
+Section: utils
+Maintainer: dev-maicondmenezes <dev-maicondmenezes@users.noreply.github.com>
+Installed-Size: 15306
+Filename: pool/main/tyot_0.1.0_linux_amd64.deb
+Size: 5441886
+MD5sum: c83217d9210b3f9e6379d573779acfc3
+SHA1: de56703d0ef95cfa2c48b6deb83c92a4c72a3f84
+SHA256: 371888b02812e59e7cb63f167a4a5800a5d12f347a7bf90ba44d7235c13a5177
+SHA512: c8596615e2b5b5830e56477e13c0999d2a58d951de5c097956e05907f5bbb42ebb68f688da7afa34deba749f569258332f01ba1928e89942d5d91aea2d342003
+Homepage: https://github.com/dev-maicondmenezes/transcript-tube-cli
+Description: Extract YouTube video metadata and transcript to Markdown.
