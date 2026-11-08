@@ -10,12 +10,12 @@ import (
 var (
 	Version = "dev"
 	Commit  = "none"
-	Date    = "unknown"
+	Date    = "desconhecida"
 )
 
 func printVersion(w io.Writer) {
 	fmt.Fprintf(w, "tyot %s\n", Version)
 	fmt.Fprintf(w, "commit: %s\n", Commit)
-	fmt.Fprintf(w, "built: %s\n", Date)
+	fmt.Fprintf(w, "compilado em: %s\n", Date)
 	fmt.Fprintf(w, "go: %s\n", runtime.Version())
 }
