@@ -101,6 +101,9 @@ nfpms:
     deb:
       compression: xz
 
+# Formula (tap) intencionalmente em `brews` para manter `brew install tyot`
+# funcionando sem `--cask`. O GoReleaser v2 avisa que `brews` está depreciado
+# em favor de `homebrew_casks`; a migração fica para o GoReleaser v3.
 brews:
   - name: tyot
     repository:
