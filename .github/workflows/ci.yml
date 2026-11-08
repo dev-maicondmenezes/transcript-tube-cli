@@ -65,7 +65,7 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           cache: true
       - name: GoReleaser snapshot
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
           version: "~> v2"
