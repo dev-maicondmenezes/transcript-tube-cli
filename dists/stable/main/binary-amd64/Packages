@@ -13,3 +13,18 @@ SHA256: 371888b02812e59e7cb63f167a4a5800a5d12f347a7bf90ba44d7235c13a5177
 SHA512: c8596615e2b5b5830e56477e13c0999d2a58d951de5c097956e05907f5bbb42ebb68f688da7afa34deba749f569258332f01ba1928e89942d5d91aea2d342003
 Homepage: https://github.com/dev-maicondmenezes/transcript-tube-cli
 Description: Extract YouTube video metadata and transcript to Markdown.
+Package: tyot
+Architecture: amd64
+Version: 0.1.1
+Priority: optional
+Section: utils
+Maintainer: dev-maicondmenezes <dev-maicondmenezes@users.noreply.github.com>
+Installed-Size: 15306
+Filename: pool/main/tyot_0.1.1_linux_amd64.deb
+Size: 5442846
+MD5sum: 58b279d37f69f07c33f6fd4f63788d48
+SHA1: a34eb190d2c5749936246a43d77ba90409e2f965
+SHA256: aff7562e0e3df3531124343826910914a6d65b050051baaafceae3b9434c56f3
+SHA512: f73b3cccf06e78d54961e5b38b454ba4b305c611b5f6a0e892fcb0868076687a770398b9ffa1e092a05d257e5f507d24a89c38898472db0402d5d3c6bbb5fe9d
+Homepage: https://github.com/dev-maicondmenezes/transcript-tube-cli
+Description: Extract YouTube video metadata and transcript to Markdown.
