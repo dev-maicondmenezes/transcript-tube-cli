@@ -74,6 +74,22 @@ jobs:
           done
           echo "::error::tag ${CORE_VERSION} do transcript-tube-core não encontrada após 30 minutos"
           exit 1
+      - name: Wait for core module in the Go proxy
+        if: steps.check.outputs.exists == 'false'
+        env:
+          CORE_VERSION: ${{ steps.version.outputs.core }}
+        run: |
+          deadline=$((SECONDS + 600))
+          while (( SECONDS < deadline )); do
+            if go mod download "github.com/dev-maicondmenezes/transcript-tube-core@${CORE_VERSION}"; then
+              echo "módulo do core disponível: ${CORE_VERSION}"
+              exit 0
+            fi
+            echo "aguardando o proxy publicar ${CORE_VERSION}..."
+            sleep 20
+          done
+          echo "::error::módulo github.com/dev-maicondmenezes/transcript-tube-core@${CORE_VERSION} indisponível após 10 minutos"
+          exit 1
       - name: Validate module files
         if: steps.check.outputs.exists == 'false'
         run: |
