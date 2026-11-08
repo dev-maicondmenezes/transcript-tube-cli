@@ -1,0 +1,11 @@
+/bin/
+/dist/
+/out/
+/.env
+/coverage.out
+/coverage.html
+*.log
+.DS_Store
+node_modules/
+go.work
+go.work.sum

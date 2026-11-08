@@ -1,0 +1,27 @@
+# Exemplo de configuração do tyot.
+#
+# Localização padrão:
+#   Linux:   $XDG_CONFIG_HOME/tyot/config.yaml (~/.config/tyot/config.yaml)
+#   macOS:   ~/Library/Application Support/tyot/config.yaml
+#   Windows: %AppData%\tyot\config.yaml
+#
+# Precedência: flag > variável de ambiente > este arquivo > default.
+#
+# A API key NÃO pode ser definida aqui. Use exclusivamente a variável de
+# ambiente YOUTUBE_API_KEY. Campos como youtube_api_key/api_key são rejeitados
+# com exit code 4.
+
+# Idioma preferido da transcrição. Equivale a --lang / TYOT_LANG.
+default_lang: "pt"
+
+# Timeout total da extração no formato de duração do Go.
+# Equivale a --timeout / TYOT_TIMEOUT.
+default_timeout: "60s"
+
+# Gera Markdown parcial quando a transcrição não estiver disponível.
+# Equivale a --allow-partial.
+allow_partial: false
+
+# Remove headings de capítulos do Markdown.
+# Equivale a --no-chapters.
+no_chapters: false
