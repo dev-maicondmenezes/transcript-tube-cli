@@ -36,7 +36,7 @@ func run() error {
 		Section: "1",
 		Date:    buildDate(),
 		Source:  "tyot",
-		Manual:  "tyot Manual",
+		Manual:  "Manual do tyot",
 	}
 	pages := []struct {
 		filename string

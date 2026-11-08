@@ -171,6 +171,9 @@ Markdown em stdout (ou no arquivo indicado por --output).`,
 
 	cmd.SetUsageTemplate(usageTemplate)
 	cmd.SetHelpTemplate(helpTemplate)
+	cmd.SetFlagErrorFunc(func(_ *cobra.Command, err error) error {
+		return fmt.Errorf("%s", translateFlagError(err.Error()))
+	})
 	cmd.CompletionOptions.DisableDefaultCmd = true
 	cmd.Flags().SortFlags = false
 
@@ -186,6 +189,18 @@ Markdown em stdout (ou no arquivo indicado por --output).`,
 
 	cmd.AddCommand(newCompletionCommand(cmd))
 	return cmd
+}
+
+func translateFlagError(message string) string {
+	if strings.HasPrefix(message, "unknown flag:") {
+		remainder := strings.TrimSpace(strings.TrimPrefix(message, "unknown flag:"))
+		return "flag desconhecida: " + remainder
+	}
+	if strings.HasPrefix(message, "unknown shorthand flag:") {
+		remainder := strings.TrimPrefix(message, "unknown shorthand flag:")
+		return "flag curta desconhecida:" + strings.TrimSpace(remainder)
+	}
+	return message
 }
 
 // NewRootCommandForDocs expõe a árvore de comandos para cmd/gen-man sem
@@ -225,9 +240,9 @@ func isTerminal(file *os.File) bool {
 
 const usageTemplate = `Uso:{{if .Runnable}}
   {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
-  {{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
+  {{.CommandPath}} [comando]{{end}}{{if gt (len .Aliases) 0}}
 
-Aliases:
+Atalhos:
   {{.NameAndAliases}}{{end}}{{if .HasExample}}
 
 Exemplos:
@@ -242,7 +257,7 @@ Flags:
 Flags globais:
 {{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableSubCommands}}
 
-Use "{{.CommandPath}} [command] --help" para mais informações sobre um comando.{{end}}
+Use "{{.CommandPath}} [comando] --help" para mais informações sobre um comando.{{end}}
 `
 
 const helpTemplate = `{{with (or .Long .Short)}}{{. | trimTrailingWhitespaces}}

@@ -124,7 +124,7 @@ func TestVersionWithoutEnv(t *testing.T) {
 	if code != ExitOK {
 		t.Fatalf("exit = %d, want %d", code, ExitOK)
 	}
-	for _, want := range []string{"tyot v0.1.0", "commit: abc123", "built: 2026-11-08T00:00:00Z"} {
+	for _, want := range []string{"tyot v0.1.0", "commit: abc123", "compilado em: 2026-11-08T00:00:00Z"} {
 		if !strings.Contains(stdout, want) {
 			t.Fatalf("stdout = %q, want %q", stdout, want)
 		}
@@ -213,8 +213,8 @@ func TestUnknownFlagWithEnv(t *testing.T) {
 	if code != ExitArgument {
 		t.Fatalf("exit = %d, want %d", code, ExitArgument)
 	}
-	if !strings.Contains(stderr, "unknown flag") {
-		t.Fatalf("stderr = %q, want unknown flag", stderr)
+	if !strings.Contains(stderr, "flag desconhecida") {
+		t.Fatalf("stderr = %q, want flag desconhecida", stderr)
 	}
 }
 

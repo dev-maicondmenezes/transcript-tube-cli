@@ -3,7 +3,7 @@ module github.com/dev-maicondmenezes/transcript-tube-cli
 go 1.23.6
 
 require (
-	github.com/dev-maicondmenezes/transcript-tube-core v0.2.1
+	github.com/dev-maicondmenezes/transcript-tube-core v0.2.2
 	github.com/spf13/cobra v1.8.1
 	gopkg.in/yaml.v3 v3.0.1
 )
