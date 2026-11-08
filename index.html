@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>tyot — transcript-tube-cli</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 46rem; margin: 3rem auto; padding: 0 1.25rem; line-height: 1.6; }
+    code { background: #f3f3f3; padding: .15rem .35rem; border-radius: 4px; }
+    pre { background: #f3f3f3; padding: 1rem; overflow-x: auto; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>tyot</h1>
+  <p>Extrai metadados, capítulos e transcrição de vídeos do YouTube para Markdown.</p>
+  <h2>APT (Debian/Ubuntu)</h2>
+  <pre><code>curl -fsSL https://dev-maicondmenezes.github.io/transcript-tube-cli/key.gpg \
+  | sudo gpg --dearmor -o /usr/share/keyrings/tyot.gpg
+echo "deb [signed-by=/usr/share/keyrings/tyot.gpg] https://dev-maicondmenezes.github.io/transcript-tube-cli stable main" \
+  | sudo tee /etc/apt/sources.list.d/tyot.list
+sudo apt update
+sudo apt install tyot</code></pre>
+  <h2>Repositório</h2>
+  <p><a href="https://github.com/dev-maicondmenezes/transcript-tube-cli">github.com/dev-maicondmenezes/transcript-tube-cli</a></p>
+</body>
+</html>
