@@ -1,0 +1,71 @@
+.nh
+.TH "TYOT" "1" "Nov 2026" "tyot" "tyot Manual"
+
+.SH NAME
+.PP
+tyot - Extrai metadados e transcrição do YouTube para Markdown
+
+
+.SH SYNOPSIS
+.PP
+\fBtyot URL-ou-ID [flags]\fP
+
+
+.SH DESCRIPTION
+.PP
+tyot — extrai metadados e transcrição do YouTube para Markdown
+
+.PP
+O comando aceita uma URL do YouTube ou um ID de 11 caracteres e escreve
+Markdown em stdout (ou no arquivo indicado por --output).
+
+
+.SH OPTIONS
+.PP
+\fB-l\fP, \fB--lang\fP="pt"
+	Idioma preferido da transcrição
+
+.PP
+\fB-o\fP, \fB--output\fP=""
+	Arquivo de saída (padrão: stdout)
+
+.PP
+\fB--timeout\fP=1m0s
+	Timeout total da extração
+
+.PP
+\fB--allow-partial\fP[=false]
+	Retorna Markdown parcial se a transcrição falhar
+
+.PP
+\fB--no-chapters\fP[=false]
+	Desabilita headings de capítulos no Markdown
+
+.PP
+\fB-q\fP, \fB--quiet\fP[=false]
+	Suprime logs de progresso em stderr
+
+.PP
+\fB--config\fP=""
+	Arquivo de configuração (padrão: $XDG_CONFIG_HOME/tyot/config.yaml)
+
+.PP
+\fB-V\fP, \fB--version\fP[=false]
+	Mostra versão, commit e data de build
+
+.PP
+\fB-h\fP, \fB--help\fP[=false]
+	Mostra esta ajuda
+
+
+.SH EXAMPLE
+.EX
+  tyot dQw4w9WgXcQ
+  tyot "https://youtu.be/dQw4w9WgXcQ" -o out/rick.md
+  tyot "https://www.youtube.com/watch?v=dQw4w9WgXcQ" --lang en
+.EE
+
+
+.SH SEE ALSO
+.PP
+\fBtyot-completion(1)\fP

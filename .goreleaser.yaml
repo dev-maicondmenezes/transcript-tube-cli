@@ -1,0 +1,132 @@
+version: 2
+
+project_name: tyot
+
+builds:
+  - id: tyot
+    main: ./cmd/tyot
+    binary: tyot
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+      - arm
+    goarm:
+      - "7"
+    ignore:
+      - goos: darwin
+        goarch: arm
+      - goos: windows
+        goarch: arm
+    ldflags:
+      - -s -w
+      - -X github.com/dev-maicondmenezes/transcript-tube-cli/internal/cli.Version={{.Version}}
+      - -X github.com/dev-maicondmenezes/transcript-tube-cli/internal/cli.Commit={{.Commit}}
+      - -X github.com/dev-maicondmenezes/transcript-tube-cli/internal/cli.Date={{.Date}}
+
+archives:
+  - id: tyot
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    files:
+      - LICENSE
+      - README.md
+      - CHANGELOG.md
+      - docs/man/tyot.1
+      - docs/man/tyot-completion.1
+      - docs/completions/tyot.bash
+      - docs/completions/tyot.zsh
+      - docs/completions/tyot.fish
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - '^ci:'
+
+nfpms:
+  - id: deb
+    package_name: tyot
+    vendor: dev-maicondmenezes
+    homepage: https://github.com/dev-maicondmenezes/transcript-tube-cli
+    maintainer: dev-maicondmenezes <dev-maicondmenezes@users.noreply.github.com>
+    description: Extract YouTube video metadata and transcript to Markdown.
+    license: MIT
+    section: utils
+    priority: optional
+    formats:
+      - deb
+    bindir: /usr/bin
+    contents:
+      - src: docs/man/tyot.1
+        dst: /usr/share/man/man1/tyot.1
+        file_info:
+          mode: 0644
+      - src: docs/man/tyot-completion.1
+        dst: /usr/share/man/man1/tyot-completion.1
+        file_info:
+          mode: 0644
+      - src: LICENSE
+        dst: /usr/share/doc/tyot/copyright
+        file_info:
+          mode: 0644
+      - src: docs/completions/tyot.bash
+        dst: /usr/share/bash-completion/completions/tyot
+        file_info:
+          mode: 0644
+      - src: docs/completions/tyot.zsh
+        dst: /usr/share/zsh/vendor-completions/_tyot
+        file_info:
+          mode: 0644
+      - src: docs/completions/tyot.fish
+        dst: /usr/share/fish/vendor_completions.d/tyot.fish
+        file_info:
+          mode: 0644
+    deb:
+      compression: xz
+
+brews:
+  - name: tyot
+    repository:
+      owner: dev-maicondmenezes
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Formula
+    homepage: https://github.com/dev-maicondmenezes/transcript-tube-cli
+    description: Extract YouTube video metadata and transcript to Markdown.
+    license: MIT
+    skip_upload: auto
+    install: |
+      bin.install "tyot"
+      man1.install "docs/man/tyot.1"
+      man1.install "docs/man/tyot-completion.1"
+      bash_completion.install "docs/completions/tyot.bash" => "tyot"
+      zsh_completion.install "docs/completions/tyot.zsh" => "_tyot"
+      fish_completion.install "docs/completions/tyot.fish"
+    test: |
+      system "#{bin}/tyot", "--version"
+
+release:
+  github:
+    owner: dev-maicondmenezes
+    name: transcript-tube-cli
+  draft: false
+  prerelease: auto
+  mode: replace
+  name_template: "tyot {{.Version}}"
