@@ -1,36 +1,36 @@
 Architectures: amd64 arm64 armhf
 Codename: stable
 Components: main
-Date: Sun, 08 Nov 2026 23:40:10 +0000
+Date: Mon, 09 Nov 2026 01:21:06 +0000
 Description: APT repository for tyot
 Label: tyot
 Origin: dev-maicondmenezes
 Suite: stable
 MD5Sum:
  f9023c9528f3e24d76c848254e17d397             1362 main/binary-amd64/Packages
- 8906aebec5276899b327c8c712e6b126              681 main/binary-amd64/Packages.gz
+ 860005373b98841d29a5e0b1be9e20ff              681 main/binary-amd64/Packages.gz
  684cb4d6c69c158d5be84b0caf615d5d             1362 main/binary-arm64/Packages
- fe122e32f1ae9f535aea380f9e2d3e0d              677 main/binary-arm64/Packages.gz
+ 0dc13c11caf6611fac1b4ae55fbc650d              677 main/binary-arm64/Packages.gz
  58e6892e6a0870db0cb26b15854c751b             1362 main/binary-armhf/Packages
- 3f57d8c30815dd59fadc9672a77af1d8              682 main/binary-armhf/Packages.gz
+ ad8eabaab71da8c03323ac46e0fb70d1              682 main/binary-armhf/Packages.gz
 SHA1:
  d39938c13b6e5b066b4bd2cd38d3d46e4bcc780b             1362 main/binary-amd64/Packages
- 9145599b2fed74878943ab2e09f9fea24a71601e              681 main/binary-amd64/Packages.gz
+ 5024919b6361dc2adb31a78035273159fc4262ff              681 main/binary-amd64/Packages.gz
  27084ed0cf5e6d282bb731292e45443a9eaec9ee             1362 main/binary-arm64/Packages
- 6a6cff393d5002a77542139b58bcc9fc6e6a6efe              677 main/binary-arm64/Packages.gz
+ 47afc8a6740d20756a20aa919b662170c788c2d3              677 main/binary-arm64/Packages.gz
  3f3f9febd77d0ccd97896a94c423a7fa6c0b7844             1362 main/binary-armhf/Packages
- 53e826e8c3bcda081e519aed434fa142cff3bfb4              682 main/binary-armhf/Packages.gz
+ b66b1b319528161880236e5008231a41d7c1d61e              682 main/binary-armhf/Packages.gz
 SHA256:
  fee46dcd727eabe672f0da32298bcdce0e59cc60860428ea7fd3036c169ae79d             1362 main/binary-amd64/Packages
- bbf2a46790209e2e927065f31cfa8973362bf03ce681dd629de9b5a89ca40e71              681 main/binary-amd64/Packages.gz
+ 2c1b2beebf42397b7278092ddeb461da72c7fd15dfbf7c8a2c24ca67b0f8caa4              681 main/binary-amd64/Packages.gz
  e791bd55402b75b7e6824973b3c96104a14aa678f41e862a5fcc7a245873e30d             1362 main/binary-arm64/Packages
- d1eb0bb8f3d97520d87789f574893f4ea0c9b46a56a65e7dfd446dd510f7ab85              677 main/binary-arm64/Packages.gz
+ 2cde83cd32977d672f74edb2a75824db706cfacdf73206a74bdd967c24f83690              677 main/binary-arm64/Packages.gz
  36eeb4f5381d94269bd7a9462d50bb3562df55b1193f1769c837d88a7580287a             1362 main/binary-armhf/Packages
- 4bdbfdf7d422f83022011e9d03c85b80d20764176782043416a58b3906c4ca48              682 main/binary-armhf/Packages.gz
+ c86d9dd64b750aa45a1f292560962b7186adb24663779599abdaba6fbdef507b              682 main/binary-armhf/Packages.gz
 SHA512:
  7925826f455d534d6d957ea19d4c67e7ee8b598ccbb933821a71df6218ca7f3d05d296b6f38c5f4f1165af2714fc4993e59e4e14c1dae357166fcf026bef107c             1362 main/binary-amd64/Packages
- 50c0b99c337bba405bef9cda93b2e3810133fed17333f5320cf45de346daf756d7906b48af7df3f24a4aacf6e4c2eef8c4312d1e43750dab470882589e5b355e              681 main/binary-amd64/Packages.gz
+ 0544ed537def493c3bc721587d1820a626a10d6d0f31d7f324abd0aef65fb995a680a484a44891389d2648cadae2629831f9af893c612c65c17b2477f5d04baf              681 main/binary-amd64/Packages.gz
  f761cde0e4f19578ff90faf33d0ca19c3547ac2051694f6606085bc2876debff5784b65fac14156657c975c0012d12e8ec1766fe0226f2ff792656d45be20017             1362 main/binary-arm64/Packages
- 8b6454a68ddc1fe7b554b1f8fd101cfe67d20beafacfc39e3f10972f8ec38d4d551db7c22f56c4bacaad95e8f0d63a192bfc9a12502cdb80c6cd8e62ef0352ef              677 main/binary-arm64/Packages.gz
+ 842d3bfcddf58d8315a8eb1dab568c7c116c6351385030a127313262c33dfd535dda9c34d31ca88ecb7565049f7fc97f9cc341f2036ca4dc6d90f62f0a76fc9b              677 main/binary-arm64/Packages.gz
  b82a6a8dba7080cd550c259fa07f8a87e2e59189a54792cc59d98b5698291bb151a8866b64c811814ce35a6e7bd0f22c4ef19e16bc9382446cd9f77adabd46f6             1362 main/binary-armhf/Packages
- 5aacc41364af8663746b6ccb2032c1ebacbc2ba876af4393cfacf3ba9f2a4cdf7cf3e6121638be6250d6bc11948d275786712aa353e8c65bcf99a9b70654bec6              682 main/binary-armhf/Packages.gz
+ 80a4b6eec33c729e744412108bf4c82dd55bace1a81f6bca92dca7f5e2fbcb0f1ba7f10b3bff519e2caa6e09ff0c2da6fa63ebda7adbd75d2d0397bf7e2c6b24              682 main/binary-armhf/Packages.gz
