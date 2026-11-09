@@ -58,13 +58,15 @@ O merge em `main` dispara `.github/workflows/release.yml`:
      completions;
    - pacotes `.deb` (`amd64`, `arm64`, `armv7`);
    - `checksums.txt`;
-   - GitHub Release;
-   - formula `Formula/tyot.rb` no `homebrew-tap`.
-7. Publica os `.deb` no branch `gh-pages` como repositório APT:
+   - GitHub Release.
+7. A publicação da GitHub Release dispara `publish/apt.yml`, que publica os
+   `.deb` no branch `gh-pages` como repositório APT:
    - preserva versões antigas em `pool/main`;
    - regenera `Packages`, `Packages.gz` e `Release`;
    - assina com `Release.gpg`/`InRelease` quando `APT_GPG_PRIVATE_KEY` existir;
    - publica `key.gpg` para o `signed-by` do APT.
+8. A mesma publicação dispara `publish/brew.yml`, que baixa os archives macOS,
+   calcula seus checksums e atualiza `Formula/tyot.rb` no `homebrew-tap`.
 
 ## Secrets
 
