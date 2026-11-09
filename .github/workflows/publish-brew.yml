@@ -1,0 +1,83 @@
+name: publish/brew
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-brew
+  cancel-in-progress: false
+
+jobs:
+  brew:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          repository: dev-maicondmenezes/homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+          path: homebrew-tap
+      - name: Download release archives
+        run: |
+          mkdir -p dist
+          gh release download "$TAG" --repo "${{ github.repository }}" \
+            --pattern '*darwin*tar.gz' --dir dist
+      - name: Generate formula
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          darwin_amd64="tyot_${version}_darwin_amd64.tar.gz"
+          darwin_arm64="tyot_${version}_darwin_arm64.tar.gz"
+          amd64_sha="$(sha256sum "dist/$darwin_amd64" | awk '{print $1}')"
+          arm64_sha="$(sha256sum "dist/$darwin_arm64" | awk '{print $1}')"
+          cat > homebrew-tap/Formula/tyot.rb <<EOF
+          # typed: false
+          # frozen_string_literal: true
+
+          class Tyot < Formula
+            desc "Extract YouTube video metadata and transcript to Markdown."
+            homepage "${{ github.server_url }}/${{ github.repository }}"
+            version "$version"
+            license "MIT"
+
+            on_macos do
+              if Hardware::CPU.intel?
+                url "${{ github.server_url }}/${{ github.repository }}/releases/download/$TAG/$darwin_amd64"
+                sha256 "$amd64_sha"
+              end
+              if Hardware::CPU.arm?
+                url "${{ github.server_url }}/${{ github.repository }}/releases/download/$TAG/$darwin_arm64"
+                sha256 "$arm64_sha"
+              end
+            end
+
+            def install
+              bin.install "tyot"
+              man1.install "docs/man/tyot.1"
+              man1.install "docs/man/tyot-completion.1"
+              bash_completion.install "docs/completions/tyot.bash" => "tyot"
+              zsh_completion.install "docs/completions/tyot.zsh" => "_tyot"
+              fish_completion.install "docs/completions/tyot.fish"
+            end
+
+            test do
+              system "#{bin}/tyot", "--version"
+            end
+          end
+          EOF
+      - name: Commit and push formula
+        working-directory: homebrew-tap
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/tyot.rb
+          git diff --cached --quiet && exit 0
+          git commit -m "chore(formula): update tyot to ${{ github.event.release.tag_name }}"
+          git push origin main

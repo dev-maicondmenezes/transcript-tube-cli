@@ -1,0 +1,89 @@
+name: publish/apt
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-apt
+  cancel-in-progress: false
+
+jobs:
+  apt:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name }}
+      APT_GPG_PRIVATE_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: gh-pages
+          path: apt-repo
+      - name: Install APT tooling
+        run: sudo apt-get update -qq && sudo apt-get install -y apt-utils gnupg
+      - name: Download .deb assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p debs
+          gh release download "$TAG" --repo "${{ github.repository }}" \
+            --pattern '*.deb' --dir debs
+          test -n "$(find debs -name '*.deb' -print -quit)"
+      - name: Update APT repository
+        run: |
+          set -euo pipefail
+          mkdir -p apt-repo/pool/main
+          cp debs/*.deb apt-repo/pool/main/
+          cd apt-repo
+          archs="$(find pool -name '*.deb' -print0 | xargs -0 -n1 dpkg-deb -f \
+            | awk '/^Architecture:/ {print $2}' | sort -u | paste -sd' ' -)"
+          test -n "$archs"
+          cat > "$RUNNER_TEMP/apt-ftparchive.conf" <<EOF
+          APT::FTPArchive::Release {
+            Origin "dev-maicondmenezes";
+            Label "tyot";
+            Suite "stable";
+            Codename "stable";
+            Architectures "$archs";
+            Components "main";
+            Description "APT repository for tyot";
+          };
+          EOF
+          rm -rf dists/stable
+          apt-ftparchive packages pool > "$RUNNER_TEMP/Packages.all"
+          for arch in $archs; do
+            dir="dists/stable/main/binary-${arch}"
+            mkdir -p "$dir"
+            awk -v RS='' -v arch="$arch" \
+              '$0 ~ ("(^|\n)Architecture: " arch "(\n|$)")' \
+              "$RUNNER_TEMP/Packages.all" > "$dir/Packages"
+            gzip -kf "$dir/Packages"
+          done
+          apt-ftparchive -c "$RUNNER_TEMP/apt-ftparchive.conf" release dists/stable \
+            > "$RUNNER_TEMP/Release"
+          mv "$RUNNER_TEMP/Release" dists/stable/Release
+          if [ -n "${APT_GPG_PRIVATE_KEY:-}" ]; then
+            printf '%s\n' "$APT_GPG_PRIVATE_KEY" | gpg --batch --import
+            (
+              cd dists/stable
+              gpg --batch --yes --armor --detach-sign --output Release.gpg Release
+              gpg --batch --yes --clearsign --output InRelease Release
+            )
+            gpg --batch --yes --armor --export > key.gpg
+          else
+            echo "::warning::APT_GPG_PRIVATE_KEY não configurado; índice sem assinatura"
+          fi
+          touch .nojekyll
+      - name: Publish gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: apt-repo
+          publish_branch: gh-pages
+          keep_files: true
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          commit_message: "chore(apt): update repository for ${{ github.event.release.tag_name }}"

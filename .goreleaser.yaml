@@ -101,30 +101,6 @@ nfpms:
     deb:
       compression: xz
 
-# Formula (tap) intencionalmente em `brews` para manter `brew install tyot`
-# funcionando sem `--cask`. O GoReleaser v2 avisa que `brews` está depreciado
-# em favor de `homebrew_casks`; a migração fica para o GoReleaser v3.
-brews:
-  - name: tyot
-    repository:
-      owner: dev-maicondmenezes
-      name: homebrew-tap
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    directory: Formula
-    homepage: https://github.com/dev-maicondmenezes/transcript-tube-cli
-    description: Extract YouTube video metadata and transcript to Markdown.
-    license: MIT
-    skip_upload: auto
-    install: |
-      bin.install "tyot"
-      man1.install "docs/man/tyot.1"
-      man1.install "docs/man/tyot-completion.1"
-      bash_completion.install "docs/completions/tyot.bash" => "tyot"
-      zsh_completion.install "docs/completions/tyot.zsh" => "_tyot"
-      fish_completion.install "docs/completions/tyot.fish"
-    test: |
-      system "#{bin}/tyot", "--version"
-
 release:
   github:
     owner: dev-maicondmenezes
