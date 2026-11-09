@@ -25,7 +25,7 @@ jobs:
       core: ${{ steps.version.outputs.core }}
       exists: ${{ steps.check.outputs.exists }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: actions/setup-go@v7
@@ -105,7 +105,7 @@ jobs:
     needs: prepare
     if: needs.prepare.outputs.exists == 'false'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: actions/setup-go@v7
@@ -148,7 +148,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends apt-utils gnupg
       - name: Checkout gh-pages
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: gh-pages
           path: apt-repo
