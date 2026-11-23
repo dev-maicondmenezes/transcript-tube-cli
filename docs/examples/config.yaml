@@ -25,3 +25,8 @@ allow_partial: false
 # Remove headings de capítulos do Markdown.
 # Equivale a --no-chapters.
 no_chapters: false
+
+# Saída de playlists. Equivale a --playlist-mode / TYOT_PLAYLIST_MODE.
+#   single: um único Markdown (stdout ou --output)
+#   split:  um arquivo por vídeo em <output>/<titulo-da-playlist>/
+playlist_mode: "single"

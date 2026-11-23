@@ -16,6 +16,13 @@ tyot — extrai metadados e transcrição do YouTube para Markdown
 O comando aceita uma URL do YouTube ou um ID de 11 caracteres e escreve
 Markdown em stdout (ou no arquivo indicado por --output).
 
+.PP
+Quando a entrada é uma playlist (youtube.com/playlist?list=ID ou ID cru
+PL.../UU.../FL.../OLAK5uy_...), todos os vídeos são extraídos. Com
+--playlist-mode single (padrão) o resultado é um único Markdown; com
+--playlist-mode split cada vídeo vira um arquivo em //,
+com nomes em minúsculas e espaços trocados por "-".
+
 
 .SH OPTIONS
 \fB-l\fP, \fB--lang\fP="pt"
@@ -23,7 +30,7 @@ Markdown em stdout (ou no arquivo indicado por --output).
 
 .PP
 \fB-o\fP, \fB--output\fP=""
-	Arquivo de saída (padrão: stdout)
+	Arquivo de saída (padrão: stdout); em playlist com split, diretório base (padrão: .)
 
 .PP
 \fB--timeout\fP=1m0s
@@ -36,6 +43,10 @@ Markdown em stdout (ou no arquivo indicado por --output).
 .PP
 \fB--no-chapters\fP[=false]
 	Desabilita headings de capítulos no Markdown
+
+.PP
+\fB--playlist-mode\fP="single"
+	Playlist: "single" (um Markdown) ou "split" (um arquivo por vídeo em //)
 
 .PP
 \fB-q\fP, \fB--quiet\fP[=false]
@@ -59,6 +70,8 @@ Markdown em stdout (ou no arquivo indicado por --output).
   tyot dQw4w9WgXcQ
   tyot "https://youtu.be/dQw4w9WgXcQ" -o out/rick.md
   tyot "https://www.youtube.com/watch?v=dQw4w9WgXcQ" --lang en
+  tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx" -o out/playlist.md
+  tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx" --playlist-mode split -o out
 .EE
 
 

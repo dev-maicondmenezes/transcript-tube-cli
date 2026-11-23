@@ -7,6 +7,19 @@ e o projeto adere a [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Added
+
+- Suporte a playlists: URLs `playlist?list=`, `watch?list=` (sem `v=`) e IDs
+  crus `PL`/`UU`/`FL`/`OLAK5uy_` extraem todos os vídeos da playlist pela
+  YouTube Data API v3.
+- `--playlist-mode single|split` (também `TYOT_PLAYLIST_MODE` e `playlist_mode`
+  no arquivo de configuração): um único Markdown ou um arquivo por vídeo em
+  `<output>/<titulo-da-playlist>/<titulo-do-video>.md`.
+- Nomes de pastas e arquivos normalizados em minúsculas, com espaços trocados
+  por `-` e desambiguação de títulos repetidos.
+- Vídeos que falham numa playlist são avisados e pulados; os demais são
+  gerados e o comando sai com código `2`.
+
 ## [0.1.0] - 2026-11-08
 
 Primeira versão pública do CLI `tyot`.

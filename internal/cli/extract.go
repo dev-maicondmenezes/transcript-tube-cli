@@ -21,7 +21,7 @@ func (a *App) runExtract(cmd *cobra.Command, args []string, flags *rootFlags) er
 		return err
 	}
 
-	videoID, err := url.ParseVideoID(raw)
+	target, err := url.ParseTarget(raw)
 	if err != nil {
 		return &codedError{code: ExitArgument, err: err}
 	}
@@ -31,32 +31,19 @@ func (a *App) runExtract(cmd *cobra.Command, args []string, flags *rootFlags) er
 		return &codedError{code: ExitConfig, err: err}
 	}
 
+	if target.Kind == url.KindPlaylist {
+		return a.runPlaylist(target.ID, cfg)
+	}
+	videoID := target.ID
+
 	if !cfg.Quiet {
 		fmt.Fprintf(a.Err, "tyot: extraindo metadados e transcrição de %s...\n", videoID)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout)
-	defer cancel()
-
 	start := a.Now()
-	data, extractErr := a.extract(ctx, videoID, core.Options{
-		Lang:                   cfg.Lang,
-		AllowPartialTranscript: cfg.AllowPartial,
-	}, cfg.Quiet)
-
-	if extractErr != nil {
-		if errors.Is(extractErr, core.ErrTranscriptUnavailable) && cfg.AllowPartial && data != nil {
-			fmt.Fprintf(a.Err, "aviso: transcrição indisponível; gerando Markdown parcial: %v\n", extractErr)
-		} else {
-			return mapExtractError(extractErr)
-		}
-	}
-	if data == nil {
-		return &codedError{code: ExitExtraction, err: errors.New("a extração não retornou dados")}
-	}
-
-	if cfg.NoChapters {
-		data.Chapters = nil
+	data, err := a.fetchVideo(videoID, cfg)
+	if err != nil {
+		return err
 	}
 	markdown := core.ToMarkdown(data)
 
@@ -72,6 +59,34 @@ func (a *App) runExtract(cmd *cobra.Command, args []string, flags *rootFlags) er
 		fmt.Fprintf(a.Err, "tyot: concluído em %s\n", a.Now().Sub(start).Round(time.Millisecond))
 	}
 	return nil
+}
+
+// fetchVideo extrai um vídeo aplicando o timeout total, --allow-partial e
+// --no-chapters. Os erros devolvidos já são *codedError.
+func (a *App) fetchVideo(videoID string, cfg config.Config) (*core.VideoData, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout)
+	defer cancel()
+
+	data, extractErr := a.extract(ctx, videoID, core.Options{
+		Lang:                   cfg.Lang,
+		AllowPartialTranscript: cfg.AllowPartial,
+	}, cfg.Quiet)
+
+	if extractErr != nil {
+		if errors.Is(extractErr, core.ErrTranscriptUnavailable) && cfg.AllowPartial && data != nil {
+			fmt.Fprintf(a.Err, "aviso: transcrição indisponível; gerando Markdown parcial: %v\n", extractErr)
+		} else {
+			return nil, mapExtractError(extractErr)
+		}
+	}
+	if data == nil {
+		return nil, &codedError{code: ExitExtraction, err: errors.New("a extração não retornou dados")}
+	}
+
+	if cfg.NoChapters {
+		data.Chapters = nil
+	}
+	return data, nil
 }
 
 func (a *App) extract(ctx context.Context, videoID string, opts core.Options, quiet bool) (*core.VideoData, error) {
@@ -102,6 +117,9 @@ func (a *App) configFlags(cmd *cobra.Command, flags *rootFlags) config.Flags {
 
 		NoChapters:    flags.noChapters,
 		NoChaptersSet: changed("no-chapters"),
+
+		PlaylistMode:    flags.playlistMode,
+		PlaylistModeSet: changed("playlist-mode"),
 
 		Output: flags.output,
 		Quiet:  flags.quiet,

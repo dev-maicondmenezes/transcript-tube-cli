@@ -107,7 +107,35 @@ tyot dQw4w9WgXcQ --no-chapters
 
 # URL via stdin (quando não é TTY)
 echo "https://youtu.be/dQw4w9WgXcQ" | tyot
+
+# Playlist inteira em um único Markdown (padrão)
+tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx" -o out/playlist.md
+
+# Playlist com um arquivo por vídeo: out/<titulo-da-playlist>/<titulo-do-video>.md
+tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx" --playlist-mode split -o out
 ```
+
+### Playlists
+
+Quando a entrada é uma playlist (`youtube.com/playlist?list=ID`,
+`youtube.com/watch?list=ID` sem `v=`, ou um ID cru com prefixo `PL`, `UU`, `FL`
+ou `OLAK5uy_`), o `tyot` lista todos os vídeos pela YouTube Data API e extrai
+cada um. Uma URL `watch?v=ID&list=...` continua extraindo apenas o vídeo `ID`.
+
+| `--playlist-mode` | Resultado |
+| :--- | :--- |
+| `single` (padrão) | Um único Markdown com cabeçalho da playlist e todos os vídeos, em `stdout` ou em `--output`. |
+| `split` | Um arquivo por vídeo em `<output>/<titulo-da-playlist>/<titulo-do-video>.md`. `--output` é o diretório base (padrão: `.`; `-` não é aceito). |
+
+Nomes de pasta e arquivo são normalizados: minúsculas, espaços entre palavras
+viram `-`, caracteres inválidos em nomes de arquivo (`/ \ : * ? " < > |`) são
+removidos e hífens repetidos são reduzidos (`Aula 01 - Introdução` →
+`aula-01-introdução.md`). Títulos repetidos recebem sufixo `-2`, `-3`, etc.
+
+Vídeos que falham (privados, removidos, sem transcrição sem `--allow-partial`)
+geram um aviso em `stderr` e são pulados; os demais são gerados e o comando
+termina com código `2`. O `--timeout` vale para a listagem e, separadamente,
+para cada vídeo.
 
 O `stdout` contém **apenas Markdown**. Logs de progresso e avisos vão para
 `stderr`; use `--quiet`/`-q` para suprimir o progresso.
@@ -120,10 +148,11 @@ O `stdout` contém **apenas Markdown**. Logs de progresso e avisos vão para
 | `--version` | `-V` | — | Mostra versão, commit e data de build. |
 | `--config` | — | `$XDG_CONFIG_HOME/tyot/config.yaml` | Arquivo de configuração. |
 | `--lang` | `-l` | `pt` | Idioma preferido da transcrição. |
-| `--output` | `-o` | `stdout` | Arquivo Markdown de saída. `-` significa stdout. |
-| `--timeout` | — | `60s` | Timeout total da extração. |
+| `--output` | `-o` | `stdout` | Arquivo Markdown de saída. `-` significa stdout. Em playlist com `split`, diretório base. |
+| `--timeout` | — | `60s` | Timeout total da extração (por vídeo, em playlists). |
 | `--allow-partial` | — | `false` | Gera Markdown parcial se a transcrição falhar. |
 | `--no-chapters` | — | `false` | Remove headings de capítulos do Markdown. |
+| `--playlist-mode` | — | `single` | Playlist: `single` (um Markdown) ou `split` (um arquivo por vídeo). |
 | `--quiet` | `-q` | `false` | Suprime logs de progresso em `stderr`. |
 
 ### Variáveis de ambiente
@@ -133,6 +162,7 @@ O `stdout` contém **apenas Markdown**. Logs de progresso e avisos vão para
 | `YOUTUBE_API_KEY` | única fonte | API key da YouTube Data API v3. Obrigatória para extração. |
 | `TYOT_LANG` | 2 | Equivale a `--lang`. |
 | `TYOT_TIMEOUT` | 2 | Equivale a `--timeout`. |
+| `TYOT_PLAYLIST_MODE` | 2 | Equivale a `--playlist-mode`. |
 | `TYOT_CONFIG` | 2 | Caminho alternativo do arquivo de configuração. |
 | `NO_COLOR` | — | Desabilita cores (reservado para o futuro). |
 
@@ -144,6 +174,7 @@ default_lang: "pt"
 default_timeout: "60s"
 allow_partial: false
 no_chapters: false
+playlist_mode: "single"   # ou "split"
 ```
 
 Precedência: **flag > env > arquivo > default**. Arquivo ausente não é erro.
