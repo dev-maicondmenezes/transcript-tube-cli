@@ -108,11 +108,11 @@ tyot dQw4w9WgXcQ --no-chapters
 # URL via stdin (quando não é TTY)
 echo "https://youtu.be/dQw4w9WgXcQ" | tyot
 
-# Playlist inteira em um único Markdown (padrão)
-tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx" -o out/playlist.md
+# Playlist: um arquivo por vídeo no diretório atual (padrão)
+tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx"
 
-# Playlist com um arquivo por vídeo: out/<titulo-da-playlist>/<titulo-do-video>.md
-tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx" --playlist-mode split -o out
+# Playlist em um único Markdown, quando solicitado explicitamente
+tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx" --playlist-mode single -o out/playlist.md
 ```
 
 ### Playlists
@@ -120,12 +120,15 @@ tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx" --playlist-mode 
 Quando a entrada é uma playlist (`youtube.com/playlist?list=ID`,
 `youtube.com/watch?list=ID` sem `v=`, ou um ID cru com prefixo `PL`, `UU`, `FL`
 ou `OLAK5uy_`), o `tyot` lista todos os vídeos pela YouTube Data API e extrai
-cada um. Uma URL `watch?v=ID&list=...` continua extraindo apenas o vídeo `ID`.
+cada um. Uma URL `watch?v=ID&list=...` pergunta no terminal se você deseja
+extrair somente o vídeo ou a playlist inteira. Sem TTY, extrai somente o vídeo
+e avisa em `stderr`. Para scripts, use `--yes-playlist` ou `--no-playlist` para
+escolher automaticamente sem interação.
 
 | `--playlist-mode` | Resultado |
 | :--- | :--- |
-| `single` (padrão) | Um único Markdown com cabeçalho da playlist e todos os vídeos, em `stdout` ou em `--output`. |
-| `split` | Um arquivo por vídeo em `<output>/<titulo-da-playlist>/<titulo-do-video>.md`. `--output` é o diretório base (padrão: `.`; `-` não é aceito). |
+| `split` (padrão) | Um arquivo por vídeo em `<output>/<titulo-da-playlist>/<titulo-do-video>.md`. `--output` é o diretório base (padrão: `.`; `-` não é aceito). Não despeja o conteúdo no terminal. |
+| `single` | Um único Markdown com cabeçalho da playlist e todos os vídeos, em `stdout` ou em `--output`. |
 
 Nomes de pasta e arquivo são normalizados: minúsculas, espaços entre palavras
 viram `-`, caracteres inválidos em nomes de arquivo (`/ \ : * ? " < > |`) são
@@ -152,7 +155,9 @@ O `stdout` contém **apenas Markdown**. Logs de progresso e avisos vão para
 | `--timeout` | — | `60s` | Timeout total da extração (por vídeo, em playlists). |
 | `--allow-partial` | — | `false` | Gera Markdown parcial se a transcrição falhar. |
 | `--no-chapters` | — | `false` | Remove headings de capítulos do Markdown. |
-| `--playlist-mode` | — | `single` | Playlist: `single` (um Markdown) ou `split` (um arquivo por vídeo). |
+| `--playlist-mode` | — | `split` | Playlist: `split` (um arquivo por vídeo) ou `single` (um Markdown). |
+| `--yes-playlist` | — | `false` | Escolhe a playlist inteira automaticamente em links de vídeo com `list=`. |
+| `--no-playlist` | — | `false` | Escolhe somente o vídeo automaticamente em links com `list=`. |
 | `--quiet` | `-q` | `false` | Suprime logs de progresso em `stderr`. |
 
 ### Variáveis de ambiente
@@ -174,7 +179,7 @@ default_lang: "pt"
 default_timeout: "60s"
 allow_partial: false
 no_chapters: false
-playlist_mode: "single"   # ou "split"
+playlist_mode: "split"    # ou "single"
 ```
 
 Precedência: **flag > env > arquivo > default**. Arquivo ausente não é erro.

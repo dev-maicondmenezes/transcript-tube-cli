@@ -43,6 +43,12 @@ func (a *App) runPlaylist(playlistID string, cfg config.Config) error {
 			"--playlist-mode split grava arquivos; --output - (stdout) não é suportado")}
 	}
 
+	if split && strings.HasSuffix(strings.ToLower(cfg.Output), ".md") {
+		return &codedError{code: ExitArgument, err: fmt.Errorf(
+			"--output %q parece um arquivo, mas com --playlist-mode split ele é o diretório base; "+
+				"para gerar um único arquivo use --playlist-mode single", cfg.Output)}
+	}
+
 	start := a.Now()
 	if !cfg.Quiet {
 		fmt.Fprintf(a.Err, "tyot: listando playlist %s...\n", playlistID)
@@ -64,8 +70,10 @@ func (a *App) runPlaylist(playlistID string, cfg config.Config) error {
 		fmt.Fprintf(a.Err, "tyot: playlist %q com %d vídeo(s)\n", title, total)
 	}
 
-	videos := make([]*core.VideoData, 0, total)
+	var videos []*core.VideoData
+	usedNames := make(map[string]struct{}, total)
 	failed := 0
+	succeeded := 0
 	for i, videoID := range info.VideoIDs {
 		if !cfg.Quiet {
 			fmt.Fprintf(a.Err, "tyot: [%d/%d] extraindo %s...\n", i+1, total, videoID)
@@ -76,20 +84,24 @@ func (a *App) runPlaylist(playlistID string, cfg config.Config) error {
 			fmt.Fprintf(a.Err, "aviso: vídeo %s ignorado: %v\n", videoID, err)
 			continue
 		}
-		videos = append(videos, data)
+		succeeded++
+		if split {
+			if err := a.writePlaylistVideoFile(cfg, info, title, data, usedNames); err != nil {
+				return err
+			}
+		} else {
+			videos = append(videos, data)
+		}
 	}
-	if len(videos) == 0 {
+	if succeeded == 0 {
 		return &codedError{code: ExitExtraction, err: fmt.Errorf(
 			"nenhum dos %d vídeos da playlist pôde ser extraído", total)}
 	}
 
-	if split {
-		err = a.writePlaylistFiles(cfg, info, title, videos)
-	} else {
-		err = a.writePlaylistSingle(cfg, info, title, videos)
-	}
-	if err != nil {
-		return err
+	if !split {
+		if err := a.writePlaylistSingle(cfg, info, title, videos); err != nil {
+			return err
+		}
 	}
 
 	if !cfg.Quiet {
@@ -102,25 +114,21 @@ func (a *App) runPlaylist(playlistID string, cfg config.Config) error {
 	return nil
 }
 
-// writePlaylistFiles grava <output>/<playlist>/<video>.md, com todos os nomes
-// normalizados. --output é o diretório base (padrão: diretório atual).
-func (a *App) writePlaylistFiles(cfg config.Config, info *playlist.Info, title string, videos []*core.VideoData) error {
+// writePlaylistVideoFile grava um vídeo individual imediatamente, sem manter
+// as transcrições anteriores em memória durante a extração da playlist.
+func (a *App) writePlaylistVideoFile(cfg config.Config, info *playlist.Info, title string, data *core.VideoData, used map[string]struct{}) error {
 	base := cfg.Output
 	if base == "" {
 		base = "."
 	}
 	dir := filepath.Join(base, slug.Normalize(title, slug.Normalize(info.ID, "playlist")))
-
-	used := map[string]struct{}{}
-	for _, data := range videos {
-		name := slug.Unique(slug.Normalize(data.Title, data.ID), used)
-		path := filepath.Join(dir, name+".md")
-		if err := writeFileAtomic(path, []byte(core.ToMarkdown(data))); err != nil {
-			return &codedError{code: ExitFileWrite, err: err}
-		}
-		if !cfg.Quiet {
-			fmt.Fprintf(a.Err, "tyot: gravado %s\n", path)
-		}
+	name := slug.Unique(slug.Normalize(data.Title, data.ID), used)
+	path := filepath.Join(dir, name+".md")
+	if err := writeFileAtomic(path, []byte(core.ToMarkdown(data))); err != nil {
+		return &codedError{code: ExitFileWrite, err: err}
+	}
+	if !cfg.Quiet {
+		fmt.Fprintf(a.Err, "tyot: gravado %s\n", path)
 	}
 	return nil
 }

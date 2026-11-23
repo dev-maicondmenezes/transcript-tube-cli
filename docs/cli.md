@@ -134,26 +134,33 @@ O `tyot` trata a entrada como playlist quando ela é:
 | `watch?list=` **sem** `v=` | `https://www.youtube.com/watch?list=PLxxxxxxxxxxxxxxxx` |
 | ID cru com prefixo `PL`, `UU`, `FL` ou `OLAK5uy_` | `PLxxxxxxxxxxxxxxxx` |
 
-Uma URL `watch?v=ID&list=...` continua extraindo **apenas o vídeo** `ID`.
+Uma URL `watch?v=ID&list=...` pergunta no terminal se você deseja extrair
+somente o vídeo ou a playlist inteira. Em execução sem TTY, o padrão seguro é
+extrair somente o vídeo e emitir um aviso em `stderr`. Para scripts e execuções
+automáticas, use `--yes-playlist` para escolher a playlist ou `--no-playlist`
+para escolher somente o vídeo sem perguntar.
 
 Os vídeos são listados pela YouTube Data API v3 (a mesma `YOUTUBE_API_KEY`) e
 extraídos um a um, na ordem da playlist, sem repetidos.
 
 ### Modos de saída (`--playlist-mode`)
 
-- **`single`** (padrão): um único Markdown, em `stdout` ou em `--output`, com o
-  título da playlist, a URL e a contagem de vídeos, seguidos de cada vídeo
-  separado por `***`.
-- **`split`**: um arquivo por vídeo em
+- **`split`** (padrão): um arquivo por vídeo em
   `<output>/<titulo-da-playlist>/<titulo-do-video>.md`. `--output` é o
   **diretório base** (padrão: diretório atual); `--output -` é rejeitado com
-  código `1`. Os arquivos são gravados de forma atômica.
+  código `1`. Os arquivos são gravados de forma atômica. Por padrão, a
+  extração da playlist não escreve conteúdo em `stdout`, evitando acumular
+  grandes transcrições no buffer do terminal.
+- **`single`**: um único Markdown, em `stdout` ou em `--output`, com o título
+  da playlist, a URL e a contagem de vídeos, seguidos de cada vídeo separado
+  por `***`.
 
 ```bash
-tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx" -o out/playlist.md
-tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx" --playlist-mode split -o out
-# out/curso-de-go/aula-01-introdução.md
-# out/curso-de-go/aula-02-variáveis.md
+tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx"
+# out/curso-de-go/aula-01-introdução.md (no diretório atual)
+tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx" -o out
+# Um único arquivo Markdown, se solicitado explicitamente:
+tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx" --playlist-mode single -o out/playlist.md
 ```
 
 O modo também pode vir de `TYOT_PLAYLIST_MODE` ou de `playlist_mode` no arquivo
@@ -194,7 +201,9 @@ vídeo.
 | `--timeout` | — | `60s` | Timeout total da extração, por vídeo em playlists (formato Go: `30s`, `2m`, `1m30s`). |
 | `--allow-partial` | — | `false` | Gera Markdown parcial quando a transcrição falha. |
 | `--no-chapters` | — | `false` | Remove os headings de capítulos do Markdown. |
-| `--playlist-mode` | — | `single` | Playlist: `single` (um Markdown) ou `split` (um arquivo por vídeo). |
+| `--playlist-mode` | — | `split` | Playlist: `split` (um arquivo por vídeo) ou `single` (um Markdown). |
+| `--yes-playlist` | — | `false` | Em link de vídeo dentro de playlist, escolhe a playlist inteira sem perguntar. |
+| `--no-playlist` | — | `false` | Em link de vídeo dentro de playlist, escolhe somente o vídeo sem perguntar. |
 | `--quiet` | `-q` | `false` | Suprime logs de progresso em `stderr`. |
 
 A precedência é **flag > variável de ambiente > arquivo > default**. Apenas
@@ -247,7 +256,7 @@ default_lang: "pt"
 default_timeout: "60s"
 allow_partial: false
 no_chapters: false
-playlist_mode: "single"   # ou "split"
+playlist_mode: "split"    # ou "single"
 ```
 
 Regras:

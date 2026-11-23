@@ -15,6 +15,8 @@ e o projeto adere a [SemVer](https://semver.org/lang/pt-BR/).
 - `--playlist-mode single|split` (também `TYOT_PLAYLIST_MODE` e `playlist_mode`
   no arquivo de configuração): um único Markdown ou um arquivo por vídeo em
   `<output>/<titulo-da-playlist>/<titulo-do-video>.md`.
+- `watch?v=ID&list=...` extrai só o vídeo; com `--playlist-mode` explícito na
+  linha de comando, extrai a playlist inteira.
 - Nomes de pastas e arquivos normalizados em minúsculas, com espaços trocados
   por `-` e desambiguação de títulos repetidos.
 - Vídeos que falham numa playlist são avisados e pulados; os demais são

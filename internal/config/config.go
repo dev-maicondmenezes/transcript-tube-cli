@@ -28,7 +28,7 @@ const (
 	// da playlist.
 	PlaylistModeSplit = "split"
 
-	DefaultPlaylistMode = PlaylistModeSingle
+	DefaultPlaylistMode = PlaylistModeSplit
 )
 
 // Config é a configuração efetiva após aplicar todas as camadas.

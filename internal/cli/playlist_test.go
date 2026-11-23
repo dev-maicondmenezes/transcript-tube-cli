@@ -99,7 +99,7 @@ func TestPlaylistSingleToStdout(t *testing.T) {
 	lister, extractor := defaultPlaylist()
 	_, _, run := newPlaylistApp(t, lister, extractor)
 
-	code, stdout, stderr := run(testPlaylistURL, "--quiet")
+	code, stdout, stderr := run(testPlaylistURL, "--playlist-mode", "single", "--quiet")
 	if code != ExitOK {
 		t.Fatalf("exit = %d, stderr = %q", code, stderr)
 	}
@@ -129,7 +129,7 @@ func TestPlaylistSingleToFile(t *testing.T) {
 	_, dir, run := newPlaylistApp(t, lister, extractor)
 	out := filepath.Join(dir, "sub", "playlist.md")
 
-	code, stdout, stderr := run(testPlaylistURL, "-o", out, "-q")
+	code, stdout, stderr := run(testPlaylistURL, "--playlist-mode", "single", "-o", out, "-q")
 	if code != ExitOK {
 		t.Fatalf("exit = %d, stderr = %q", code, stderr)
 	}
@@ -206,8 +206,13 @@ func TestPlaylistSplitDefaultsToCurrentDirectory(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chdir(oldWD) })
 
-	if code, _, stderr := run(testPlaylistURL, "--playlist-mode", "split", "-q"); code != ExitOK {
+	// Sem nenhuma flag de playlist: padrão é um arquivo por vídeo no diretório atual.
+	code, stdout, stderr := run(testPlaylistURL, "-q")
+	if code != ExitOK {
 		t.Fatalf("exit = %d, stderr = %q", code, stderr)
+	}
+	if stdout != "" {
+		t.Fatalf("stdout = %q, want empty", stdout)
 	}
 	if got := listFiles(t, dir); len(got) != 2 || !strings.HasPrefix(got[0], "curso-de-go-2026-básico/") {
 		t.Fatalf("files = %v", got)
@@ -218,9 +223,31 @@ func TestPlaylistSplitRejectsStdoutOutput(t *testing.T) {
 	lister, extractor := defaultPlaylist()
 	_, _, run := newPlaylistApp(t, lister, extractor)
 
-	code, _, stderr := run(testPlaylistURL, "--playlist-mode", "split", "-o", "-")
+	// Vale tanto com split explícito quanto com o padrão (split).
+	for _, args := range [][]string{
+		{testPlaylistURL, "--playlist-mode", "split", "-o", "-"},
+		{testPlaylistURL, "-o", "-"},
+	} {
+		code, _, stderr := run(args...)
+		if code != ExitArgument {
+			t.Fatalf("%v: exit = %d, want %d (stderr %q)", args, code, ExitArgument, stderr)
+		}
+	}
+	if lister.called {
+		t.Fatal("não deveria listar a playlist com argumentos inválidos")
+	}
+}
+
+func TestPlaylistSplitRejectsMarkdownFileOutput(t *testing.T) {
+	lister, extractor := defaultPlaylist()
+	_, dir, run := newPlaylistApp(t, lister, extractor)
+
+	code, _, stderr := run(testPlaylistURL, "-o", filepath.Join(dir, "playlist.md"))
 	if code != ExitArgument {
 		t.Fatalf("exit = %d, want %d (stderr %q)", code, ExitArgument, stderr)
+	}
+	if !strings.Contains(stderr, "--playlist-mode single") {
+		t.Fatalf("stderr = %q, want dica de --playlist-mode single", stderr)
 	}
 	if lister.called {
 		t.Fatal("não deveria listar a playlist com argumentos inválidos")
@@ -311,36 +338,37 @@ func TestPlaylistModeFromEnvAndFlagPrecedence(t *testing.T) {
 	lister, extractor := defaultPlaylist()
 	app, dir, run := newPlaylistApp(t, lister, extractor)
 	env := envWithKey()
-	env["TYOT_PLAYLIST_MODE"] = "split"
+	env["TYOT_PLAYLIST_MODE"] = "single"
 	app.Getenv = testGetenv(env)
 
-	// env define split -> arquivos
-	if code, _, stderr := run(testPlaylistURL, "-o", dir, "-q"); code != ExitOK {
-		t.Fatalf("exit = %d, stderr = %q", code, stderr)
-	}
-	if got := listFiles(t, dir); len(got) != 2 {
-		t.Fatalf("env split: files = %v", got)
+	// env define single (o padrão é split) -> Markdown em stdout
+	code, stdout, stderr := run(testPlaylistURL, "-q")
+	if code != ExitOK || !strings.Contains(stdout, "**Vídeos:** 2") {
+		t.Fatalf("env single: exit = %d, stdout = %q, stderr = %q", code, stdout, stderr)
 	}
 
-	// flag sobrepõe env -> stdout
+	// flag sobrepõe env -> arquivos
 	app.Out.(interface{ Reset() }).Reset()
-	code, stdout, _ := run(testPlaylistURL, "--playlist-mode", "single", "-q")
-	if code != ExitOK || !strings.Contains(stdout, "**Vídeos:** 2") {
-		t.Fatalf("flag single: exit = %d, stdout = %q", code, stdout)
+	if code, _, stderr := run(testPlaylistURL, "--playlist-mode", "split", "-o", dir, "-q"); code != ExitOK {
+		t.Fatalf("flag split: exit = %d, stderr = %q", code, stderr)
+	}
+	if got := listFiles(t, dir); len(got) != 2 {
+		t.Fatalf("flag split: files = %v", got)
 	}
 }
 
-func TestVideoURLWithListStaysSingleVideo(t *testing.T) {
+const testVideoInPlaylistURL = "https://www.youtube.com/watch?v=aaaaaaaaaaa&list=PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf"
+
+func TestVideoInPlaylistNoPlaylistFlag(t *testing.T) {
 	lister, extractor := defaultPlaylist()
 	_, _, run := newPlaylistApp(t, lister, extractor)
 
-	url := "https://www.youtube.com/watch?v=aaaaaaaaaaa&list=PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf"
-	code, stdout, stderr := run(url, "-q")
+	code, stdout, stderr := run(testVideoInPlaylistURL, "--no-playlist", "-q")
 	if code != ExitOK {
 		t.Fatalf("exit = %d, stderr = %q", code, stderr)
 	}
 	if lister.called {
-		t.Fatal("watch?v=...&list=... deve extrair só o vídeo")
+		t.Fatal("--no-playlist deve extrair só o vídeo")
 	}
 	if len(extractor.calls) != 1 || extractor.calls[0] != "aaaaaaaaaaa" {
 		t.Fatalf("calls = %v", extractor.calls)
@@ -348,13 +376,133 @@ func TestVideoURLWithListStaysSingleVideo(t *testing.T) {
 	if !strings.Contains(stdout, "# Aula 01 - Introdução") {
 		t.Fatalf("stdout = %q", stdout)
 	}
+	if strings.TrimSpace(stderr) != "" {
+		t.Fatalf("stderr = %q, want empty (sem aviso nem pergunta)", stderr)
+	}
+}
+
+func TestVideoInPlaylistYesPlaylistFlag(t *testing.T) {
+	lister, extractor := defaultPlaylist()
+	_, dir, run := newPlaylistApp(t, lister, extractor)
+
+	code, _, stderr := run(testVideoInPlaylistURL, "--yes-playlist", "-o", dir, "-q")
+	if code != ExitOK {
+		t.Fatalf("exit = %d, stderr = %q", code, stderr)
+	}
+	if !lister.called || lister.id != "PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf" || len(extractor.calls) != 2 {
+		t.Fatalf("lister.called=%v id=%q calls=%v, want playlist com 2 vídeos", lister.called, lister.id, extractor.calls)
+	}
+	if got := listFiles(t, dir); len(got) != 2 {
+		t.Fatalf("files = %v", got)
+	}
+}
+
+func TestVideoInPlaylistConflictingFlags(t *testing.T) {
+	lister, extractor := defaultPlaylist()
+	_, _, run := newPlaylistApp(t, lister, extractor)
+
+	// Mesmo numa URL sem playlist, a combinação é inválida.
+	for _, url := range []string{testVideoInPlaylistURL, "dQw4w9WgXcQ"} {
+		code, _, stderr := run(url, "--yes-playlist", "--no-playlist")
+		if code != ExitArgument || !strings.Contains(stderr, "não podem ser usadas juntas") {
+			t.Fatalf("%s: exit = %d, stderr = %q", url, code, stderr)
+		}
+	}
+	if lister.called || len(extractor.calls) != 0 {
+		t.Fatal("nada deveria ser extraído")
+	}
+}
+
+func TestVideoInPlaylistWithoutTTYExtractsVideoAndWarns(t *testing.T) {
+	lister, extractor := defaultPlaylist()
+	_, _, run := newPlaylistApp(t, lister, extractor) // InIsTTY = false
+
+	code, stdout, stderr := run(testVideoInPlaylistURL, "-q")
+	if code != ExitOK {
+		t.Fatalf("exit = %d, stderr = %q", code, stderr)
+	}
+	if lister.called || len(extractor.calls) != 1 {
+		t.Fatalf("lister.called=%v calls=%v, want só o vídeo", lister.called, extractor.calls)
+	}
+	if !strings.Contains(stderr, "faz parte de uma playlist") || !strings.Contains(stderr, "--yes-playlist") {
+		t.Fatalf("stderr = %q, want aviso com dica de --yes-playlist", stderr)
+	}
+	if !strings.Contains(stdout, "# Aula 01 - Introdução") {
+		t.Fatalf("stdout = %q", stdout)
+	}
+}
+
+func TestVideoInPlaylistPrompt(t *testing.T) {
+	tests := []struct {
+		name         string
+		input        string
+		wantCode     int
+		wantPlaylist bool
+		wantAsked    int // quantas vezes a pergunta apareceu
+	}{
+		{"p escolhe a playlist", "p\n", ExitOK, true, 1},
+		{"playlist por extenso, maiúsculas", " PLAYLIST \n", ExitOK, true, 1},
+		{"v escolhe o vídeo", "v\n", ExitOK, false, 1},
+		{"enter assume o vídeo", "\n", ExitOK, false, 1},
+		{"EOF assume o vídeo", "", ExitOK, false, 1},
+		{"resposta inválida repete e depois aceita", "x\np\n", ExitOK, true, 2},
+		{"3 respostas inválidas falham", "x\ny\nz\n", ExitArgument, false, 3},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			lister, extractor := defaultPlaylist()
+			app, dir, run := newPlaylistApp(t, lister, extractor)
+			app.InIsTTY = true
+			app.In = strings.NewReader(test.input)
+
+			args := []string{testVideoInPlaylistURL}
+			if test.wantPlaylist {
+				args = append(args, "-o", dir)
+			}
+			code, stdout, stderr := run(args...)
+			if code != test.wantCode {
+				t.Fatalf("exit = %d, want %d (stderr %q)", code, test.wantCode, stderr)
+			}
+			if got := strings.Count(stderr, "faz parte de uma playlist."); got != test.wantAsked {
+				t.Fatalf("pergunta apareceu %d vez(es), want %d:\n%s", got, test.wantAsked, stderr)
+			}
+			if strings.Contains(stdout, "playlist") && strings.Contains(stdout, "Escolha") {
+				t.Fatalf("a pergunta não pode ir para stdout: %q", stdout)
+			}
+			if test.wantCode != ExitOK {
+				return
+			}
+			if lister.called != test.wantPlaylist {
+				t.Fatalf("lister.called = %v, want %v", lister.called, test.wantPlaylist)
+			}
+			wantCalls := 1
+			if test.wantPlaylist {
+				wantCalls = 2
+			}
+			if len(extractor.calls) != wantCalls {
+				t.Fatalf("calls = %v, want %d", extractor.calls, wantCalls)
+			}
+		})
+	}
+}
+
+func TestPlainVideoNeverPrompts(t *testing.T) {
+	lister, extractor := defaultPlaylist()
+	app, _, run := newPlaylistApp(t, lister, extractor)
+	app.InIsTTY = true
+	app.In = strings.NewReader("")
+
+	code, _, stderr := run("aaaaaaaaaaa", "-q")
+	if code != ExitOK || stderr != "" || lister.called {
+		t.Fatalf("exit = %d, stderr = %q, lister.called = %v", code, stderr, lister.called)
+	}
 }
 
 func TestPlaylistRawIDIsRecognized(t *testing.T) {
 	lister, extractor := defaultPlaylist()
-	_, _, run := newPlaylistApp(t, lister, extractor)
+	_, dir, run := newPlaylistApp(t, lister, extractor)
 
-	if code, _, stderr := run("PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf", "-q"); code != ExitOK {
+	if code, _, stderr := run("PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf", "-o", dir, "-q"); code != ExitOK {
 		t.Fatalf("exit = %d, stderr = %q", code, stderr)
 	}
 	if !lister.called {

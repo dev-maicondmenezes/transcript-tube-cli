@@ -152,14 +152,22 @@ Markdown em stdout (ou no arquivo indicado por --output).
 
 Quando a entrada é uma playlist (youtube.com/playlist?list=ID ou ID cru
 PL.../UU.../FL.../OLAK5uy_...), todos os vídeos são extraídos. Com
---playlist-mode single (padrão) o resultado é um único Markdown; com
---playlist-mode split cada vídeo vira um arquivo em <output>/<titulo-da-playlist>/,
-com nomes em minúsculas e espaços trocados por "-".`,
+--playlist-mode split (padrão) cada vídeo vira um arquivo em
+<output>/<titulo-da-playlist>/ (output padrão: diretório atual), com nomes em
+minúsculas e espaços trocados por "-". Com --playlist-mode single o resultado é
+um único Markdown em stdout ou --output.
+
+Um link de vídeo que também aponta para uma playlist (watch?v=ID&list=...)
+pergunta se você quer só o vídeo ou a playlist inteira. Use --yes-playlist ou
+--no-playlist para decidir sem perguntar; sem terminal interativo, extrai só o
+vídeo e avisa em stderr.`,
 		Example: `  tyot dQw4w9WgXcQ
   tyot "https://youtu.be/dQw4w9WgXcQ" -o out/rick.md
   tyot "https://www.youtube.com/watch?v=dQw4w9WgXcQ" --lang en
-  tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx" -o out/playlist.md
-  tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx" --playlist-mode split -o out`,
+  tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx"
+  tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx" -o out
+  tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx" --playlist-mode single -o out/playlist.md
+  tyot "https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=PLxxxxxxxxxxxxxxxx" --yes-playlist`,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if flags.version {
 				return nil
@@ -192,11 +200,13 @@ com nomes em minúsculas e espaços trocados por "-".`,
 	cmd.Flags().SortFlags = false
 
 	cmd.Flags().StringVarP(&flags.lang, "lang", "l", "pt", "Idioma preferido da transcrição")
-	cmd.Flags().StringVarP(&flags.output, "output", "o", "", "Arquivo de saída (padrão: stdout); em playlist com split, diretório base (padrão: .)")
+	cmd.Flags().StringVarP(&flags.output, "output", "o", "", "Arquivo de saída (padrão: stdout); em playlist com split, diretório base (padrão: diretório atual)")
 	cmd.Flags().DurationVar(&flags.timeout, "timeout", 60*time.Second, "Timeout total da extração")
 	cmd.Flags().BoolVar(&flags.allowPartial, "allow-partial", false, "Retorna Markdown parcial se a transcrição falhar")
 	cmd.Flags().BoolVar(&flags.noChapters, "no-chapters", false, "Desabilita headings de capítulos no Markdown")
-	cmd.Flags().StringVar(&flags.playlistMode, "playlist-mode", config.DefaultPlaylistMode, "Playlist: \"single\" (um Markdown) ou \"split\" (um arquivo por vídeo em <output>/<playlist>/)")
+	cmd.Flags().StringVar(&flags.playlistMode, "playlist-mode", config.DefaultPlaylistMode, "Playlist: \"split\" (um arquivo por vídeo em <output>/<playlist>/) ou \"single\" (um Markdown)")
+	cmd.Flags().BoolVar(&flags.yesPlaylist, "yes-playlist", false, "Link de vídeo dentro de playlist: extrai a playlist inteira sem perguntar")
+	cmd.Flags().BoolVar(&flags.noPlaylist, "no-playlist", false, "Link de vídeo dentro de playlist: extrai só o vídeo sem perguntar")
 	cmd.Flags().BoolVarP(&flags.quiet, "quiet", "q", false, "Suprime logs de progresso em stderr")
 	cmd.Flags().StringVar(&flags.configPath, "config", "", "Arquivo de configuração (padrão: $XDG_CONFIG_HOME/tyot/config.yaml)")
 	cmd.Flags().BoolVarP(&flags.version, "version", "V", false, "Mostra versão, commit e data de build")
@@ -238,6 +248,8 @@ type rootFlags struct {
 	allowPartial bool
 	noChapters   bool
 	playlistMode string
+	yesPlaylist  bool
+	noPlaylist   bool
 	quiet        bool
 	configPath   string
 	version      bool

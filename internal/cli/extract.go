@@ -16,6 +16,11 @@ import (
 )
 
 func (a *App) runExtract(cmd *cobra.Command, args []string, flags *rootFlags) error {
+	if flags.yesPlaylist && flags.noPlaylist {
+		return &codedError{code: ExitArgument, err: errors.New(
+			"--yes-playlist e --no-playlist não podem ser usadas juntas")}
+	}
+
 	raw, err := a.readInput(cmd, args)
 	if err != nil {
 		return err
@@ -29,6 +34,17 @@ func (a *App) runExtract(cmd *cobra.Command, args []string, flags *rootFlags) er
 	cfg, err := config.Load(a.configFlags(cmd, flags), a.Getenv)
 	if err != nil {
 		return &codedError{code: ExitConfig, err: err}
+	}
+
+	// Link de vídeo que também aponta para uma playlist: vídeo ou playlist?
+	if target.Kind == url.KindVideo && target.PlaylistID != "" {
+		wantPlaylist, err := a.resolvePlaylistScope(target.ID, flags)
+		if err != nil {
+			return err
+		}
+		if wantPlaylist {
+			target = url.Target{Kind: url.KindPlaylist, ID: target.PlaylistID}
+		}
 	}
 
 	if target.Kind == url.KindPlaylist {

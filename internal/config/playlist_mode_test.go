@@ -6,13 +6,13 @@ import (
 	"testing"
 )
 
-func TestPlaylistModeDefaultsToSingle(t *testing.T) {
+func TestPlaylistModeDefaultsToSplit(t *testing.T) {
 	cfg, err := Load(Flags{ConfigPath: filepath.Join(t.TempDir(), "nope.yaml"), ConfigPathSet: true}, getenv(nil))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.PlaylistMode != PlaylistModeSingle {
-		t.Fatalf("PlaylistMode = %q, want %q", cfg.PlaylistMode, PlaylistModeSingle)
+	if cfg.PlaylistMode != PlaylistModeSplit {
+		t.Fatalf("PlaylistMode = %q, want %q", cfg.PlaylistMode, PlaylistModeSplit)
 	}
 }
 
