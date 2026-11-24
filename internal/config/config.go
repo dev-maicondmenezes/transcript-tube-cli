@@ -20,6 +20,15 @@ import (
 const (
 	DefaultLang    = "pt"
 	DefaultTimeout = 60 * time.Second
+
+	// PlaylistModeSingle junta todos os vídeos da playlist em um único
+	// Markdown (stdout ou --output).
+	PlaylistModeSingle = "single"
+	// PlaylistModeSplit grava um arquivo por vídeo em uma pasta com o título
+	// da playlist.
+	PlaylistModeSplit = "split"
+
+	DefaultPlaylistMode = PlaylistModeSplit
 )
 
 // Config é a configuração efetiva após aplicar todas as camadas.
@@ -28,6 +37,7 @@ type Config struct {
 	Timeout      time.Duration
 	AllowPartial bool
 	NoChapters   bool
+	PlaylistMode string
 	Output       string
 	Quiet        bool
 	ConfigPath   string
@@ -50,6 +60,9 @@ type Flags struct {
 
 	NoChapters    bool
 	NoChaptersSet bool
+
+	PlaylistMode    string
+	PlaylistModeSet bool
 
 	Output string
 	Quiet  bool
@@ -75,8 +88,9 @@ func (e *Error) Unwrap() error {
 // Default devolve a configuração base.
 func Default() Config {
 	return Config{
-		Lang:    DefaultLang,
-		Timeout: DefaultTimeout,
+		Lang:         DefaultLang,
+		Timeout:      DefaultTimeout,
+		PlaylistMode: DefaultPlaylistMode,
 	}
 }
 
@@ -126,7 +140,28 @@ func Load(flags Flags, getenv func(string) string) (Config, error) {
 	if cfg.Timeout <= 0 {
 		return Config{}, &Error{Message: fmt.Sprintf("timeout deve ser maior que zero (recebido %s)", cfg.Timeout)}
 	}
+
+	mode, err := normalizePlaylistMode(cfg.PlaylistMode)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.PlaylistMode = mode
 	return cfg, nil
+}
+
+func normalizePlaylistMode(value string) (string, error) {
+	mode := strings.ToLower(strings.TrimSpace(value))
+	switch mode {
+	case "":
+		return DefaultPlaylistMode, nil
+	case PlaylistModeSingle, PlaylistModeSplit:
+		return mode, nil
+	default:
+		return "", &Error{Message: fmt.Sprintf(
+			"modo de playlist inválido %q (use %q ou %q)",
+			value, PlaylistModeSingle, PlaylistModeSplit,
+		)}
+	}
 }
 
 func applyFile(cfg *Config, path string) error {
@@ -178,6 +213,9 @@ func applyFile(cfg *Config, path string) error {
 	if file.NoChapters != nil {
 		cfg.NoChapters = *file.NoChapters
 	}
+	if file.PlaylistMode != nil {
+		cfg.PlaylistMode = strings.TrimSpace(*file.PlaylistMode)
+	}
 	return nil
 }
 
@@ -191,6 +229,9 @@ func applyEnv(cfg *Config, getenv func(string) string) error {
 			return &Error{Message: fmt.Sprintf("TYOT_TIMEOUT inválido (%q)", value), Err: err}
 		}
 		cfg.Timeout = timeout
+	}
+	if value := strings.TrimSpace(getenv("TYOT_PLAYLIST_MODE")); value != "" {
+		cfg.PlaylistMode = value
 	}
 	return nil
 }
@@ -208,6 +249,9 @@ func applyFlags(cfg *Config, flags Flags) {
 	if flags.NoChaptersSet {
 		cfg.NoChapters = flags.NoChapters
 	}
+	if flags.PlaylistModeSet {
+		cfg.PlaylistMode = flags.PlaylistMode
+	}
 	cfg.Output = flags.Output
 	cfg.Quiet = flags.Quiet
 }
@@ -217,6 +261,7 @@ type fileConfig struct {
 	DefaultTimeout *string `yaml:"default_timeout"`
 	AllowPartial   *bool   `yaml:"allow_partial"`
 	NoChapters     *bool   `yaml:"no_chapters"`
+	PlaylistMode   *string `yaml:"playlist_mode"`
 }
 
 func findAPIKey(value any) string {

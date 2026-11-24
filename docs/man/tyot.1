@@ -16,6 +16,20 @@ tyot — extrai metadados e transcrição do YouTube para Markdown
 O comando aceita uma URL do YouTube ou um ID de 11 caracteres e escreve
 Markdown em stdout (ou no arquivo indicado por --output).
 
+.PP
+Quando a entrada é uma playlist (youtube.com/playlist?list=ID ou ID cru
+PL.../UU.../FL.../OLAK5uy_...), todos os vídeos são extraídos. Com
+--playlist-mode split (padrão) cada vídeo vira um arquivo em
+// (output padrão: diretório atual), com nomes em
+minúsculas e espaços trocados por "-". Com --playlist-mode single o resultado é
+um único Markdown em stdout ou --output.
+
+.PP
+Um link de vídeo que também aponta para uma playlist (watch?v=ID&list=...)
+pergunta se você quer só o vídeo ou a playlist inteira. Use --yes-playlist ou
+--no-playlist para decidir sem perguntar; sem terminal interativo, extrai só o
+vídeo e avisa em stderr.
+
 
 .SH OPTIONS
 \fB-l\fP, \fB--lang\fP="pt"
@@ -23,7 +37,7 @@ Markdown em stdout (ou no arquivo indicado por --output).
 
 .PP
 \fB-o\fP, \fB--output\fP=""
-	Arquivo de saída (padrão: stdout)
+	Arquivo de saída (padrão: stdout); em playlist com split, diretório base (padrão: diretório atual)
 
 .PP
 \fB--timeout\fP=1m0s
@@ -36,6 +50,18 @@ Markdown em stdout (ou no arquivo indicado por --output).
 .PP
 \fB--no-chapters\fP[=false]
 	Desabilita headings de capítulos no Markdown
+
+.PP
+\fB--playlist-mode\fP="split"
+	Playlist: "split" (um arquivo por vídeo em //) ou "single" (um Markdown)
+
+.PP
+\fB--yes-playlist\fP[=false]
+	Link de vídeo dentro de playlist: extrai a playlist inteira sem perguntar
+
+.PP
+\fB--no-playlist\fP[=false]
+	Link de vídeo dentro de playlist: extrai só o vídeo sem perguntar
 
 .PP
 \fB-q\fP, \fB--quiet\fP[=false]
@@ -59,6 +85,10 @@ Markdown em stdout (ou no arquivo indicado por --output).
   tyot dQw4w9WgXcQ
   tyot "https://youtu.be/dQw4w9WgXcQ" -o out/rick.md
   tyot "https://www.youtube.com/watch?v=dQw4w9WgXcQ" --lang en
+  tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx"
+  tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx" -o out
+  tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx" --playlist-mode single -o out/playlist.md
+  tyot "https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=PLxxxxxxxxxxxxxxxx" --yes-playlist
 .EE
 
 

@@ -14,6 +14,7 @@ distribuição.
 - [Instalação](#instalação)
 - [Uso rápido](#uso-rápido)
 - [Formatos de URL e ID](#formatos-de-url-e-id)
+- [Playlists](#playlists)
 - [Flags](#flags)
 - [Variáveis de ambiente](#variáveis-de-ambiente)
 - [Arquivo de configuração](#arquivo-de-configuração)
@@ -118,8 +119,75 @@ O `tyot` aceita:
 | Sem esquema | `youtube.com/watch?v=dQw4w9WgXcQ` |
 | Subdomínio `*.youtube.com` | `https://music.youtube.com/watch?v=dQw4w9WgXcQ` |
 
-São rejeitados com código `1`: URLs de playlist/canal, hosts desconhecidos,
-IDs com tamanho diferente de 11 e esquemas que não sejam `http`/`https`.
+São rejeitados com código `1`: URLs de canal, hosts desconhecidos, IDs com
+tamanho diferente de 11 e esquemas que não sejam `http`/`https`.
+
+URLs de playlist são aceitas — veja [Playlists](#playlists).
+
+## Playlists
+
+O `tyot` trata a entrada como playlist quando ela é:
+
+| Formato | Exemplo |
+| :--- | :--- |
+| `playlist?list=` | `https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx` |
+| `watch?list=` **sem** `v=` | `https://www.youtube.com/watch?list=PLxxxxxxxxxxxxxxxx` |
+| ID cru com prefixo `PL`, `UU`, `FL` ou `OLAK5uy_` | `PLxxxxxxxxxxxxxxxx` |
+
+Uma URL `watch?v=ID&list=...` pergunta no terminal se você deseja extrair
+somente o vídeo ou a playlist inteira. Em execução sem TTY, o padrão seguro é
+extrair somente o vídeo e emitir um aviso em `stderr`. Para scripts e execuções
+automáticas, use `--yes-playlist` para escolher a playlist ou `--no-playlist`
+para escolher somente o vídeo sem perguntar.
+
+Os vídeos são listados pela YouTube Data API v3 (a mesma `YOUTUBE_API_KEY`) e
+extraídos um a um, na ordem da playlist, sem repetidos.
+
+### Modos de saída (`--playlist-mode`)
+
+- **`split`** (padrão): um arquivo por vídeo em
+  `<output>/<titulo-da-playlist>/<titulo-do-video>.md`. `--output` é o
+  **diretório base** (padrão: diretório atual); `--output -` é rejeitado com
+  código `1`. Os arquivos são gravados de forma atômica. Por padrão, a
+  extração da playlist não escreve conteúdo em `stdout`, evitando acumular
+  grandes transcrições no buffer do terminal.
+- **`single`**: um único Markdown, em `stdout` ou em `--output`, com o título
+  da playlist, a URL e a contagem de vídeos, seguidos de cada vídeo separado
+  por `***`.
+
+```bash
+tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx"
+# out/curso-de-go/aula-01-introdução.md (no diretório atual)
+tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx" -o out
+# Um único arquivo Markdown, se solicitado explicitamente:
+tyot "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx" --playlist-mode single -o out/playlist.md
+```
+
+O modo também pode vir de `TYOT_PLAYLIST_MODE` ou de `playlist_mode` no arquivo
+de configuração (precedência flag > env > arquivo > default). Um valor
+diferente de `single`/`split` resulta em código `4`.
+
+### Normalização de nomes
+
+Nomes de pasta e arquivo seguem estas regras:
+
+- letras em minúsculo (acentos são preservados);
+- espaços entre palavras viram `-`;
+- `/ \ : * ? " < > |` e caracteres de controle são removidos;
+- hífens repetidos são reduzidos a um (`Aula 01 - Introdução` →
+  `aula-01-introdução`);
+- hífens e pontos nas pontas são aparados e o nome é limitado a 100 caracteres;
+- títulos repetidos na mesma playlist ganham sufixo `-2`, `-3`, …;
+- título vazio ou só com caracteres inválidos usa o ID do vídeo/playlist.
+
+### Falhas parciais
+
+Vídeos privados, removidos ou sem transcrição (sem `--allow-partial`) emitem um
+aviso em `stderr` (`aviso: vídeo ID ignorado: ...`) e são pulados. Os demais
+são gerados normalmente e o comando termina com código `2`
+(`N de M vídeos da playlist falharam`). Se nenhum vídeo puder ser extraído,
+nada é gerado. O `--timeout` vale para a listagem e, separadamente, para cada
+vídeo.
 
 ## Flags
 
@@ -129,10 +197,13 @@ IDs com tamanho diferente de 11 e esquemas que não sejam `http`/`https`.
 | `--version` | `-V` | — | Mostra versão, commit, data de build e versão do Go. |
 | `--config` | — | `$XDG_CONFIG_HOME/tyot/config.yaml` | Arquivo de configuração YAML. |
 | `--lang` | `-l` | `pt` | Idioma preferido da transcrição. |
-| `--output` | `-o` | `stdout` | Arquivo Markdown de saída. `-` significa `stdout`. |
-| `--timeout` | — | `60s` | Timeout total da extração (formato Go: `30s`, `2m`, `1m30s`). |
+| `--output` | `-o` | `stdout` | Arquivo Markdown de saída. `-` significa `stdout`. Em playlist com `split`, é o diretório base. |
+| `--timeout` | — | `60s` | Timeout total da extração, por vídeo em playlists (formato Go: `30s`, `2m`, `1m30s`). |
 | `--allow-partial` | — | `false` | Gera Markdown parcial quando a transcrição falha. |
 | `--no-chapters` | — | `false` | Remove os headings de capítulos do Markdown. |
+| `--playlist-mode` | — | `split` | Playlist: `split` (um arquivo por vídeo) ou `single` (um Markdown). |
+| `--yes-playlist` | — | `false` | Em link de vídeo dentro de playlist, escolhe a playlist inteira sem perguntar. |
+| `--no-playlist` | — | `false` | Em link de vídeo dentro de playlist, escolhe somente o vídeo sem perguntar. |
 | `--quiet` | `-q` | `false` | Suprime logs de progresso em `stderr`. |
 
 A precedência é **flag > variável de ambiente > arquivo > default**. Apenas
@@ -160,6 +231,7 @@ resulta em código `3` e não deixa Markdown parcial no destino.
 | `YOUTUBE_API_KEY` | única fonte | API key da YouTube Data API v3. Obrigatória para extração. |
 | `TYOT_LANG` | 2 | Equivale a `--lang`. |
 | `TYOT_TIMEOUT` | 2 | Equivale a `--timeout` (formato Go). |
+| `TYOT_PLAYLIST_MODE` | 2 | Equivale a `--playlist-mode` (`single` ou `split`). |
 | `TYOT_CONFIG` | 2 | Caminho alternativo do arquivo de configuração. |
 | `NO_COLOR` | — | Desabilita cores (reservado para versões futuras). |
 
@@ -184,6 +256,7 @@ default_lang: "pt"
 default_timeout: "60s"
 allow_partial: false
 no_chapters: false
+playlist_mode: "split"    # ou "single"
 ```
 
 Regras:
@@ -301,10 +374,10 @@ Nenhum log é escrito em `stdout`: ele contém apenas Markdown.
 | Código | Significado |
 | :--- | :--- |
 | `0` | Sucesso. |
-| `1` | Erro de argumento: URL/ID inválido, argumento vazio, flag inválida ou uso incorreto. |
-| `2` | Erro de extração: `YOUTUBE_API_KEY` ausente, rede, API, vídeo não encontrado, timeout, cancelamento ou transcrição indisponível. |
+| `1` | Erro de argumento: URL/ID inválido, argumento vazio, flag inválida, `--playlist-mode split` com `--output -` ou uso incorreto. |
+| `2` | Erro de extração: `YOUTUBE_API_KEY` ausente, rede, API, vídeo/playlist não encontrado, timeout, cancelamento, transcrição indisponível ou vídeos de uma playlist que falharam. |
 | `3` | Erro ao criar diretório ou escrever o arquivo de saída. |
-| `4` | Erro de configuração: YAML inválido, campo desconhecido, timeout inválido ou tentativa de API key no arquivo. |
+| `4` | Erro de configuração: YAML inválido, campo desconhecido, timeout ou modo de playlist inválido, ou tentativa de API key no arquivo. |
 
 ## Completions e man page
 
